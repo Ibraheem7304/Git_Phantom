@@ -4,6 +4,21 @@
 
 -----
 
+## 🧭 Table of Contents
+
+* ✨ [Key Features](#-key-features)
+* ⚙️ [Prerequisites and Installation](%EF%B8%8F-prerequisites-and-installation)
+    * [1. Installing the Required Tools](#1-installing-the-required-tools)
+    * [2. GitHub CLI and PAT Setup](#2-github-cli-and-pat-setup)
+* 🚀 [Quick Start and Usage](#-quick-start-and-usage)
+* 🔑 [Configuration Guide](#-configuration-guide)
+    * [Target Definition (Orgs.txt)](#target-definition-orgstxt)
+    * [False Positive Filtering (IGNORED_KEYWORDS)](#false-positive-filtering-ignored_keywords)
+* 🔍 [Deep Scanning Mechanisms (How It Works)](#-deep-scanning-mechanisms-how-it-works)
+* 📂 [Output Structure and Reporting](#-output-structure-and-reporting)
+
+-----
+
 ## ✨ Key Features
 
 Git Phantom is designed for a **full security sweep**, targeting overlooked areas where secrets commonly hide:
