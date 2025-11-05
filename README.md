@@ -1,91 +1,100 @@
-# 🛡️ Git Phantom
+# 👻 Git Phantom: The Comprehensive GitHub Secrets Scanner 🔍
 
-A powerful Bash script designed to aggressively scan GitHub organizations for hardcoded secrets, API keys, and credentials across various vectors, including **repositories**, **dangling Git objects**, **deleted files**, **Gists**, **Issue bodies**, and **Pull Request bodies**.
+**An advanced Bash script leveraging Trufflehog and GitHub CLI to audit your organization's entire GitHub footprint—including deep Git history, deleted files, Gists, and Issue/PR content—ensuring no forgotten secret is left behind.**
 
-This script leverages `trufflehog` for deep scanning and utilizes `git`, `gh (GitHub CLI)`, and other standard tools for data extraction and processing. Notifications for discovered secrets are sent directly to a configured **Discord webhook**.
+-----
 
-## ✨ Features
+## ✨ Key Features
 
-* **Deep Repository Scanning:** Uses `trufflehog git` for full history analysis of non-fork repositories.
-* **Dangling Blob Analysis:** Extracts and scans unreachable Git blob objects for forgotten secrets.
-* **Deleted File Recovery:** Scrapes commit history to recover and scan the content of files that were deleted in subsequent commits.
-* **Archive & Binary String Extraction:** Attempts to unpack archives (`.zip`, `.tar`, etc.) and extracts strings from binary files within the repo for extra scanning.
-* **Content Scanning:** Searches **Gists**, **Issue Bodies**, and **Pull Request Bodies** for secrets.
-* **Discord Notifications:** Immediately notifies a specified webhook upon finding a valid secret.
-* **Configurable Ignored Keywords:** Filters out common false positives (e.g., crypto, demo, test keys) using a customizable keyword list.
-* **Robust Logging:** Detailed timestamped logs are written to both the screen and a `run.log` file.
-* **Automatic Cleanup:** Manages temporary directories and files using `trap` for reliable cleanup upon exit.
-* **Results Backup:** Scanned results are backed up before clearing the primary scan directory.
+Git Phantom is designed for a **full security sweep**, targeting overlooked areas where secrets commonly hide:
 
----
-
-## ⚙️ Prerequisites
-
-Before running the script, ensure you have the following tools installed and configured:
-
-| Tool | Purpose | Installation Check |
+| Feature | Description | Benefit |
 | :--- | :--- | :--- |
-| **Bash** | Script execution environment | `bash --version` |
-| **Trufflehog** | Primary secrets scanning engine | `trufflehog version` |
-| **GitHub CLI (`gh`)** | Accessing GitHub repositories, Gists, Issues, and PRs | `gh --version` |
-| **`git`** | Repository cloning and history inspection | `git --version` |
-| **`jq`** | JSON processing for Trufflehog results and API calls | `jq --version` |
-| **`unzip`, `unrar`, `tar`, `7z` (optional)** | Archive extraction for deeper scanning | `command -v unzip` (etc.) |
-| **Standard Tools** | `file`, `strings`, `sha1sum`, `mktemp`, `curl`, etc. | |
+| **🕰️ Full History Scan** | Audits the complete Git history of all non-forked repositories using `trufflehog git`. | Uncovers secrets committed and later removed. |
+| **🗑️ Deleted File Recovery** | Extracts the content of files that were deleted in subsequent commits (`git diff` status 'D'). | Essential for finding secrets that developers deleted hastily instead of sanitizing the history. |
+| **👻 Dangling Blobs Scan** | Scans Git objects that are unreachable by any branch or commit. | Finds sensitive data that was staged or temporarily stored but never committed. |
+| **💬 Content Scanning** | Targets public **Gists**, and the body content of **Issues** and **Pull Requests** via the GitHub API. | Catches common developer mistakes where tokens are pasted into comments or descriptions. |
+| **📦 Binary & Archive Scan** | Extracts readable strings from binary files and unpacks archives (`.zip`, `.tar`) within repositories for deeper inspection. | Ensures secrets aren't buried inside configuration or compressed files. |
+| **🛡️ Smart Filteration** | Utilizes a customizable list of **`IGNORED_KEYWORDS`** to filter out common benign results (e.g., test keys, demo services) based on the detector name. | **Focuses alerts on genuine threats and reduces noise.** |
+| **🔔 Instant Discord Alerts** | Sends detailed, immediate notifications to a configured webhook upon discovering a verified, non-filtered secret. | Enables rapid response to exposed credentials. |
+| **🧹 Automatic Cleanup** | Uses Bash `trap` mechanisms to reliably delete all temporary directories and files upon script exit. | Maintains a clean working environment even if the script fails. |
 
-### 🔑 GitHub CLI Setup
+-----
 
-The script uses `gh` for accessing organization data, Gists, Issues, and PRs. You must be authenticated and have the necessary scopes.
+## ⚙️ Prerequisites and Installation
 
-1.  **Install `gh`** (if not already done).
-2.  **Authenticate:**
+Git Phantom is a Bash script and requires several command-line utilities to be installed in your environment (WSL, Linux, or macOS).
+
+### 1\. Installing the Required Tools
+
+You must ensure these tools are installed and accessible in your system's PATH:
+
+| Tool | Purpose | Suggested Installation (Linux/Ubuntu) |
+| :--- | :--- | :--- |
+| **Trufflehog** | Core secrets scanning engine. | `go install github.com/trufflesecurity/trufflehog@latest` |
+| **GitHub CLI (`gh`)** | Essential for API calls (Gists, Issues, PRs, Org Repos). | *Follow official GitHub instructions.* |
+| **`jq`** | JSON processing for API responses and Trufflehog output. | `sudo apt install jq` |
+| **`git`** | Repository cloning and history manipulation. | `sudo apt install git` |
+| **Archivers (Optional)**| Required for archive extraction. | `sudo apt install unzip unrar p7zip` |
+
+### 2\. GitHub CLI and PAT Setup
+
+The script requires proper GitHub authentication to bypass rate limits and access all data.
+
+1.  **Authenticate with GitHub CLI:**
+
     ```bash
     gh auth login
     ```
-    * Choose **GitHub.com** and log in via your web browser.
-    * When prompted for scopes, ensure you grant access for **`gist`** and **`repo`** (at a minimum) to allow the script to fetch all necessary data.
 
----
+      * Follow the prompts and log in via your web browser.
+      * **CRITICAL:** When asked for scopes, ensure you grant access for **`repo`** (for repositories) and **`gist`** (for gists).
 
-## 🚀 Getting Started
+2.  **Personal Access Token (PAT):**
 
-### 1. Configuration
+      * Generate a **Personal Access Token (PAT)** from your GitHub settings.
+      * **Scopes:** Ensure this token has the necessary `repo` scope.
+      * This token must be pasted into the `GITHUB_TOKEN` variable in the script file (see Configuration).
 
-Open the script and edit the **`Configuration`** section with your actual secrets and webhook URL:
+-----
+
+## 🚀 Quick Start and Usage
+
+### 1\. Clone the Repository
+
+```bash
+git clone https://github.com/Ibraheem7304/Git_Phantom.git
+cd Git_Phantom
+```
+
+### 2\. Prepare the Targets File
+
+  * Create a file named **`Orgs.txt`** in the root directory.
+  * List the GitHub organization usernames or individual usernames "Employees of the Organization" you want to scan, one per line.
+
+```text
+# Orgs.txt Example
+Company_username
+Employee1_username
+Employee2_username
+```
+
+### 3\. Edit the Script Configuration (Mandatory\!)
+
+**⚠️ SECURITY WARNING:** You **must** edit the script to replace the placeholders with your actual secrets before running.
+
+Open `Git_Phantom.sh` and update the following section:
 
 ```bash
 # --- Configuration ---
 # REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL SECRETS BEFORE RUNNING
-export GITHUB_TOKEN="YOUR_ACTUAL_GITHUB_TOKEN" # Used by gh CLI internally/fallback (optional if gh auth is done)
-export WEBHOOK_URL="YOUR_DISCORD_WEBHOOK_URL" # REQUIRED for notifications
+export GITHUB_TOKEN="YOUR_GITHUB_PAT_HERE"      # Your PAT (Required for gh CLI/API)
+export WEBHOOK_URL="YOUR_DISCORD_WEBHOOK_URL_HERE" # Your Discord webhook link
 ```
 
-> ⚠️ **Security Note:** Replace the placeholder `GITHUB_TOKEN` and `WEBHOOK_URL` with your actual values. **Do not commit sensitive tokens/URLs to your public repository\!** Consider using a separate environment file or keeping this script private.
+### 4\. Run the Script
 
-### 2\. Define Target Organizations
-
-Create a file named **`Orgs.txt`** in the same directory as the script. List the GitHub organization usernames you wish to scan, one per line.
-
-**`Orgs.txt` Example:**
-
-```
-# Comments start with a hash (#)
-MyTargetOrgName
-AnotherOrgToScan
-```
-
-### 3\. Customize Filters (Optional)
-
-The `IGNORED_KEYWORDS` array filters out results where the `DetectorName` contains one of the listed keywords (case-insensitive). This helps reduce noise from common, public keys or known test-related services.
-
-```bash
-# Keywords for Trufflehog filtering (detector type only)
-IGNORED_KEYWORDS=("openweather" "locationiq" "algolia" "ipdata" "unsplash" ...) 
-```
-
-### 4\. Execution
-
-Make the script executable and run it:
+Make the script executable and launch the scan:
 
 ```bash
 chmod +x Git_Phantom.sh
@@ -94,29 +103,63 @@ chmod +x Git_Phantom.sh
 
 -----
 
-## 📂 Output Structure
+## 🔑 Configuration Guide
 
-The script organizes all collected data and Trufflehog human-readable output into the `Scanned_Organization` directory.
+### Target Definition (`Orgs.txt`)
 
-```
-.
-├── scan_secrets.sh
-├── Orgs.txt
-├── run.log                 # Full script execution log
-├── Scanned_Organization
-│   └── TargetOrgName
-│       └── trufflehog_secrets.txt # Combined human-readable findings
-└── Scanned_Backup
-    └── Backup_YYYYMMDD_HHMMSS
-        └── ... (Copy of Scanned_Organization contents)
+  * **Purpose:** Defines the scope of the scan.
+  * The script reads this file line-by-line, ignores lines starting with `#`, and proceeds to scan all associated repositories, gists, issues, and PRs for each entry.
+
+### False Positive Filtering (`IGNORED_KEYWORDS`)
+
+This is crucial for focusing on real threats. The script converts the detector name found by Trufflehog to lowercase and checks if it contains any of these keywords.
+
+```bash
+IGNORED_KEYWORDS=("openweather" "algolia" "ipdata" "unsplash" "ipinfo" "test" "demo" "public" "default" .....................)
 ```
 
-The `trufflehog_secrets.txt` file contains the detailed, human-readable output for all detected secrets that passed the keyword filter.
+  * **How to use:** Add any service names (e.g., `algolia`) or generic terms (`sandbox`, `testing`) that you frequently see as benign findings. Secrets matching these keywords will be logged as ignored but will **not** trigger a Discord alert.
 
 -----
 
-## 🛑 Important Notes
+## 🔍 Deep Scanning Mechanisms (How It Works)
 
-  * **Rate Limits:** The script interacts heavily with the GitHub API via `gh`. Be aware of [GitHub API rate limits](https://www.google.com/search?q=https://docs.github.com/en/rest/overview/rate-limits) for your user/token. The script includes small random delays to help mitigate this, but extensive scanning may still hit limits.
-  * **Resource Usage:** Repository cloning, unpacking, and extensive history analysis (especially for deleted files and dangling blobs) can be resource-intensive and time-consuming.
-  * **Legal/Ethical:** Only run this script against organizations and repositories you have explicit authorization to scan (e.g., your own organization, public bug bounty programs).
+To help you understand the power of Git Phantom, here is a detailed breakdown of its advanced features:
+
+### 1\. Deleted Files Extraction
+
+The script performs a commit-by-commit analysis:
+
+  * It iterates through the difference (`git diff`) between every commit and its parent.
+  * If a file shows a **'D' (Deletion)** status, the script extracts the file's content **from the parent commit** (where it still existed).
+  * This content is saved to a temporary file (e.g., `commitHASH_fileHASH_filename.deleted`) and scanned, effectively recovering secrets deleted from the history.
+
+### 2\. Dangling Blob Object Scan
+
+This targets the raw data storage in Git:
+
+  * It executes `git fsck --unreachable --dangling` to find objects in the `.git/objects` folder that are no longer referenced by any branch or tag.
+  * It uses `git cat-file -p` to retrieve the contents of these raw data blobs.
+  * These contents are treated as plain files and passed to Trufflehog, catching objects that were never fully committed.
+
+### 3\. Contextual Content Scanning
+
+The script uses the `gh api` and `gh search` commands to pull non-code data:
+
+  * **Gists:** All gists are cloned locally and scanned using `trufflehog filesystem`.
+  * **Issues/PRs:** The script searches for the 100 most recent Issues and PRs, extracts the textual **body** of each one, and scans that text file for credentials.
+
+-----
+
+## 📂 Output Structure and Reporting
+
+All scan output and reports are organized and backed up:
+
+| Directory/File | Description | Retention |
+| :--- | :--- | :--- |
+| **`run.log`** | Detailed log of all script actions, processes, errors, and timestamps. | Kept until next run. |
+| **`Scanned_Organization/`** | The working directory for the current scan cycle's results. | Cleared after backup. |
+| **`OrgName/trufflehog_secrets.txt`** | The main report file containing all human-readable output for found secrets that passed the keyword filter. | Backed up. |
+| **`Scanned_Backup/`** | Contains zipped copies of the entire `Scanned_Organization` folder, timestamped for historical review. | Persists across runs. |
+
+-----
