@@ -7,7 +7,7 @@
 ## 🧭 Table of Contents
 
 * ✨ [Key Features](#-key-features)
-* ⚙️ [Prerequisites and Installation](%EF%B8%8F-prerequisites-and-installation)
+* ⚙️ [Prerequisites and Installation](-prerequisites-and-installation)
     * [1. Installing the Required Tools](#1-installing-the-required-tools)
     * [2. GitHub CLI and PAT Setup](#2-github-cli-and-pat-setup)
 * 🚀 [Quick Start and Usage](#-quick-start-and-usage)
