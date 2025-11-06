@@ -94,18 +94,39 @@ Employee1_username
 Employee2_username
 ```
 
-### 3\. Edit the Script Configuration (Mandatory\!)
-
-**⚠️ SECURITY WARNING:** You **must** edit the script to replace the placeholders with your actual secrets before running.
-
-Open `Git_Phantom.sh` and update the following section:
+### 3\. Edit the Script Configuration and install dependencies (Mandatory\!)
+Use your `Phantom_Setter.sh` to write tokens to the script file:
 
 ```bash
-# --- Configuration ---
-# REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL SECRETS BEFORE RUNNING
-export GITHUB_TOKEN="YOUR_GITHUB_PAT_HERE"      # Your PAT (Required for gh CLI/API)
-export WEBHOOK_URL="YOUR_DISCORD_WEBHOOK_URL_HERE" # Your Discord webhook link
+# Example: sets tokens inside Git_Phantom.sh
+chmod +x ./Phantom_Setter.sh
+./Phantom_Setter.sh -e -g "ghp_yourPAT" -w "https://discord.com/api/webhooks/..." -p "path/to/Git_Phantom"
 ```
+#### What each flag does
+
+`-i`
+
+* **Install dependencies.**
+* Runs `install_deps()` which does `apt-get update` (best-effort) and installs the tools listed in `pkgs=(git jq trufflehog curl file coreutils tar unzip unrar grep awk sed xargs)`.
+* If a package is already present it is skipped. If `apt` can’t install one item, the script prints a warning and continues.
+* Safe to run multiple times. Requires `sudo` for installs.
+
+`-e`
+
+* **Edit tokens inside the target script (`MAIN_SCRIPT="Git_Phantom.sh"` by default).**
+* Calls `edit_tokens()` to replace or append the `GITHUB_TOKEN` and `WEBHOOK_URL` lines inside `Git_Phantom.sh`.
+* Note: `-e` alone does nothing unless you also pass `-g` and/or `-w` (the function checks `[[ -n "$GITHUB_TOKEN" ]]` and `[[ -n "$WEBHOOK_TOKEN" ]]`).
+
+`-g <github_token>`
+
+* **Set the GitHub Personal Access Token to write into the script.**
+* The value after `-g` is stored in the variable `GITHUB_TOKEN` and used by `edit_tokens()` to replace either `export GITHUB_TOKEN=...` **or** `GITHUB_TOKEN=...`. If neither exists, it appends `export GITHUB_TOKEN="..."` at the end of the target script.
+* **Important:** If you run `-e` without `-g`, the GitHub token is left unchanged. Quoting is recommended if the token contains special characters.
+
+`-w <webhook_url>`
+
+* **Set the Discord webhook URL to write into the script.**
+* Behaves exactly like `-g`, but for `WEBHOOK_URL`. If neither `export WEBHOOK_URL=` nor `WEBHOOK_URL=` exists in the target file it appends `export WEBHOOK_URL="..."`.
 
 ### 4\. Run the Script
 
@@ -113,7 +134,7 @@ Make the script executable and launch the scan:
 
 ```bash
 chmod +x Git_Phantom.sh
-./Git_Phantom.sh
+./Git_Phantom.sh -f "path/to/Git_Phantom"
 ```
 
 -----
@@ -177,4 +198,13 @@ All scan output and reports are organized and backed up:
 | **`OrgName/trufflehog_secrets.txt`** | The main report file containing all human-readable output for found secrets that passed the keyword filter. | Backed up. |
 | **`Scanned_Backup/`** | Contains zipped copies of the entire `Scanned_Organization` folder, timestamped for historical review. | Persists across runs. |
 
------
+---
+
+## 👥 Creators
+
+| Creator                  | Github                      | LinkedIn                                  |
+| :----------------------- |:--------------------------- |:------------------------------------------| 
+| **Mohamed Ahmed Gameel** | <a href="https://www.linkedin.com/in/mohamed-ahmed-gameel-26289a246" target="_blank"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg" width="30" alt="LinkedIn"></a>  |  <a href="https://github.com/MohamedAhmedGameel" target="_blank"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="30" alt="GitHub"></a> |
+| **Ibraheem 0x49**        | <a href="https://www.linkedin.com/in/Ibraheem0x49" target="_blank"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linkedin/linkedin-original.svg" width="30" alt="LinkedIn"></a>   | <a href="https://github.com/Ibraheem7304" target="_blank"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" width="30" alt="GitHub"></a>                 |
+
+---
