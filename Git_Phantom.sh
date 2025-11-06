@@ -23,6 +23,49 @@ good()  { printf '[%s] [+] %s\n' "$(_log_timestamp)" "$1"; }
 warn()  { printf '[%s] [!] %s\n' "$(_log_timestamp)" "$1"; }
 err()   { printf '[%s] [-] %s\n' "$(_log_timestamp)" "$1"; }
 
+# --- Main Execution Block ---
+echo ""
+echo "   █████████   ███   █████       ███████████  █████                            █████                            "
+echo "  ███░░░░░███ ░░░   ░░███       ░░███░░░░░███░░███                            ░░███                             "
+echo " ███     ░░░  ████  ███████      ░███    ░███ ░███████    ██████   ████████   ███████    ██████  █████████████  "
+echo "░███         ░░███ ░░░███░       ░██████████  ░███░░███  ░░░░░███ ░░███░░███ ░░░███░    ███░░███░░███░░███░░███ "
+echo "░███    █████ ░███   ░███        ░███░░░░░░   ░███ ░███   ███████  ░███ ░███   ░███    ░███ ░███ ░███ ░███ ░███ "
+echo "░░███  ░░███  ░███   ░███ ███    ░███         ░███ ░███  ███░░███  ░███ ░███   ░███ ███░███ ░███ ░███ ░███ ░███ "
+echo " ░░█████████  █████  ░░█████     █████        ████ █████░░████████ ████ █████  ░░█████ ░░██████  █████░███ █████"
+echo "  ░░░░░░░░░  ░░░░░    ░░░░░     ░░░░░        ░░░░ ░░░░░  ░░░░░░░░ ░░░░ ░░░░░    ░░░░░   ░░░░░░  ░░░░░ ░░░ ░░░░░ "
+echo ""
+echo "# By: @Ibraheem7304 and @MohamedAhmedGameel"
+echo ""
+
+ORG_INPUT_FILE=""
+SCRIPT_NAME=$(basename "$0")
+
+usage() {
+    err "Usage: ./$SCRIPT_NAME -f <path_to_organization_list_file>"
+    err "Example: ./$SCRIPT_NAME -f targets.txt"
+    exit 1
+}
+
+while getopts "f:" opt; do
+    case "$opt" in
+        f) ORG_INPUT_FILE="$OPTARG" ;;
+        *) usage ;;
+    esac
+done
+shift $((OPTIND - 1))
+
+if [ -z "$ORG_INPUT_FILE" ]; then
+    warn "Input file path must be specified using the -f option."
+    usage
+fi
+
+if [ ! -f "$ORG_INPUT_FILE" ]; then
+    err "Input file '$ORG_INPUT_FILE' not found! Exiting.";
+    usage
+fi
+
+good "Using organization list from: $ORG_INPUT_FILE"
+
 # --- Configuration ---
 # REPLACE THESE PLACEHOLDERS WITH YOUR ACTUAL SECRETS BEFORE RUNNING
 export GITHUB_TOKEN="YOUR_GITHUB_TOKEN"
@@ -208,11 +251,8 @@ process_truffle_json() {
 
 # --- Main Execution Block ---
 info "Starting GitHub secrets scanning..."
-
-if [ ! -f "Orgs.txt" ]; then err "Orgs.txt not found! Exiting."; exit 1; fi
-
-info "Reading organizations from Orgs.txt...";
-mapfile -t ORGS < <(grep -v '^\s*#' Orgs.txt | grep -v '^\s*$' | tr -d '\r' | xargs -n1 || true)
+info "Reading organizations from $ORG_INPUT_FILE...";
+mapfile -t ORGS < <(grep -v '^\s*#' "$ORG_INPUT_FILE" | grep -v '^\s*$' | tr -d '\r' | xargs -n1 || true)
 good "Found ${#ORGS[@]} organization(s)."
 
 org_scan_count=0
