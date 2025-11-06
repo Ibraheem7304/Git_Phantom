@@ -16,6 +16,7 @@
     * [False Positive Filtering (IGNORED_KEYWORDS)](#false-positive-filtering-ignored_keywords)
 * 🔍 [Deep Scanning Mechanisms (How It Works)](#-deep-scanning-mechanisms-how-it-works)
 * 📂 [Output Structure and Reporting](#-output-structure-and-reporting)
+* 👥 [Creators](#-creators)
 
 -----
 
@@ -205,7 +206,7 @@ All scan output and reports are organized and backed up:
 | Creator | GitHub | LinkedIn |
 | :--- | :--- | :--- |
 | **Mohamed Ahmed Gameel** | [![GitHub](https://img.shields.io/badge/-GitHub-000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/MohamedAhmedGameel) | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/mohamed-ahmed-gameel-26289a246) |
-| **Ibraheem El-Mougy (Ibraheem0x49)** | [![GitHub](https://img.shields.io/badge/-GitHub-000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ibraheem7304) | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/Ibraheem0x49) |
+| **Ibraheem El-Mougy** | [![GitHub](https://img.shields.io/badge/-GitHub-000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Ibraheem7304) | [![LinkedIn](https://img.shields.io/badge/-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/Ibraheem0x49) |
 
 
 
