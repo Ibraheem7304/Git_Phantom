@@ -3,7 +3,7 @@ set -euo pipefail
 IFS=$'\n\t'
 
 # --- Configurable variables ---
-MAIN_SCRIPT="gitaudit.sh"  # Name of your main script file
+MAIN_SCRIPT="Git_Phantom.sh"  # Name of your main script file
 
 # --- Functions ---
 usage() {
@@ -17,32 +17,52 @@ usage() {
 }
 
 install_deps() {
+  echo "🔧 Updating package index..."
+  sudo apt-get update -y >/dev/null 2>&1 || echo "⚠️  Could not update apt index, continuing..."
+
   echo "🔧 Installing dependencies..."
-  pkgs=(git gh jq trufflehog file strings sha1sum mktemp rm cp tar unzip unrar date tee basename xargs awk grep curl)
+  pkgs=(git jq trufflehog curl file coreutils tar unzip unrar grep awk sed xargs)
+
   for pkg in "${pkgs[@]}"; do
     if ! command -v "$pkg" &>/dev/null; then
-      echo "➡️ Installing $pkg..."
-      sudo apt-get install -y "$pkg"
-      echo "✅ $pkg installed."
+      echo "➡️  Installing $pkg..."
+      sudo apt-get install -y "$pkg" >/dev/null 2>&1 || echo "⚠️  Could not install $pkg automatically."
     else
       echo "✅ $pkg already installed."
     fi
   done
-  echo "✅ All dependencies installed."
+
+  echo "✅ Dependency installation complete."
 }
 
 edit_tokens() {
-  [[ -f "$MAIN_SCRIPT" ]] || { echo "❌ Main script '$MAIN_SCRIPT' not found."; exit 1; }
+  if [[ ! -f "$MAIN_SCRIPT" ]]; then
+    echo "❌ Main script not found at: $MAIN_SCRIPT"
+    exit 1
+  fi
 
-  echo "✏️ Editing tokens in $MAIN_SCRIPT..."
+  echo "✏️  Editing tokens in $MAIN_SCRIPT..."
 
-  if [[ -n "${GITHUB_TOKEN:-}" ]]; then
-    sed -i "s|^GITHUB_TOKEN=.*|GITHUB_TOKEN=\"$GITHUB_TOKEN\"|" "$MAIN_SCRIPT"
+  # Use regex that matches both 'export GITHUB_TOKEN=' and 'GITHUB_TOKEN='
+  if [[ -n "$GITHUB_TOKEN" ]]; then
+    if grep -qE '^export GITHUB_TOKEN=' "$MAIN_SCRIPT"; then
+      sed -i "s|^export GITHUB_TOKEN=.*|export GITHUB_TOKEN=\"$GITHUB_TOKEN\"|" "$MAIN_SCRIPT"
+    elif grep -qE '^GITHUB_TOKEN=' "$MAIN_SCRIPT"; then
+      sed -i "s|^GITHUB_TOKEN=.*|GITHUB_TOKEN=\"$GITHUB_TOKEN\"|" "$MAIN_SCRIPT"
+    else
+      echo "export GITHUB_TOKEN=\"$GITHUB_TOKEN\"" >> "$MAIN_SCRIPT"
+    fi
     echo "✅ Updated GitHub token."
   fi
 
-  if [[ -n "${WEBHOOK_TOKEN:-}" ]]; then
-    sed -i "s|^WEBHOOK_URL=.*|WEBHOOK_URL=\"$WEBHOOK_TOKEN\"|" "$MAIN_SCRIPT"
+  if [[ -n "$WEBHOOK_TOKEN" ]]; then
+    if grep -qE '^export WEBHOOK_URL=' "$MAIN_SCRIPT"; then
+      sed -i "s|^export WEBHOOK_URL=.*|export WEBHOOK_URL=\"$WEBHOOK_TOKEN\"|" "$MAIN_SCRIPT"
+    elif grep -qE '^WEBHOOK_URL=' "$MAIN_SCRIPT"; then
+      sed -i "s|^WEBHOOK_URL=.*|WEBHOOK_URL=\"$WEBHOOK_TOKEN\"|" "$MAIN_SCRIPT"
+    else
+      echo "export WEBHOOK_URL=\"$WEBHOOK_TOKEN\"" >> "$MAIN_SCRIPT"
+    fi
     echo "✅ Updated Discord webhook."
   fi
 
@@ -77,3 +97,6 @@ fi
 if ! $INSTALL && ! $EDIT; then
   usage
 fi
+
+
+
